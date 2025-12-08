@@ -1,0 +1,6 @@
+package-as: EasyTools
+
+ignore:
+  - README.md
+  - .github
+  - .gitignore
