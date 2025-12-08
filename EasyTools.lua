@@ -53,6 +53,73 @@ local function contains(tbl, element)
 end
 
 -------------------------------------------------------------------------------
+-- Minimap Clock with Seconds
+-------------------------------------------------------------------------------
+
+local function CreateMinimapClock()
+    local originalClock = TimeManagerClockTicker
+    if originalClock and originalClock:IsVisible() then
+        originalClock:Hide()
+    end
+    
+    local clockFrame = CreateFrame("Frame", "EasyToolsClock", TimeManagerClockButton)
+    clockFrame:SetSize(80, 20)
+    clockFrame:SetPoint("CENTER", -5, 1)
+    
+    clockFrame.text = clockFrame:CreateFontString(nil, "ARTWORK", "WhiteNormalNumberFont")
+    clockFrame.text:SetAllPoints()
+    clockFrame.text:SetJustifyH("CENTER")
+    clockFrame:Show()
+    
+    return clockFrame
+end
+
+local minimapClock
+local function UpdateMinimapClock()
+    if not minimapClock then
+        minimapClock = CreateMinimapClock()
+    end
+    
+    local localCheck = TimeManagerLocalTimeCheck
+    local militaryCheck = TimeManagerMilitaryTimeCheck
+    if not (minimapClock and localCheck and militaryCheck) then return end
+    
+    local useLocalTime = localCheck:GetChecked()
+    local useMilitaryTime = militaryCheck:GetChecked()
+    
+    local h, m, s
+    local ampm = ""
+    
+    if useLocalTime then
+        local t = date("*t")
+        h, m, s = t.hour, t.min, t.sec
+    else
+        h, m = GetGameTime()
+        s = nil  -- Server time doesn't have seconds
+    end
+    
+    if not useMilitaryTime then
+        if h == 0 then
+            h = 12
+            ampm = " AM"
+        elseif h < 12 then
+            ampm = " AM"
+        elseif h == 12 then
+            ampm = " PM"
+        else
+            h = h - 12
+            ampm = " PM"
+        end
+    end
+    
+    if useLocalTime and s then
+        minimapClock.text:SetFormattedText("%02d:%02d:%02d%s", h, m, s, ampm)
+    else
+        minimapClock.text:SetFormattedText("%02d:%02d%s", h, m, ampm)
+    end
+end
+
+-------------------------------------------------------------------------------
 -- ID Tooltip Module (based on idTip)
 -------------------------------------------------------------------------------
 
@@ -908,6 +975,8 @@ end)
 EventFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
     if event == "ADDON_LOADED" then
         if arg1 == addonName then
+            -- Start minimap clock ticker (every 1 second)
+            C_Timer.NewTicker(1, UpdateMinimapClock)
             Print("Loaded - IDs in tooltips, NPC alive time, quest tracking enabled")
         elseif arg1 == "Blizzard_AchievementUI" then
             -- Achievement UI hooks

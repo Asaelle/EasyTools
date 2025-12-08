@@ -1,6 +1,6 @@
 ## Interface: 110207, 110100, 110105
 ## Title: EasyTools
-## Version: 1.0.2
+## Version: 1.0.3
 ## Notes: Adds IDs to tooltips, NPC alive time, and quest tracking in chat
 ## Author: Haidenz
 ## IconTexture: Interface\ICONS\INV_Misc_Wrench_01

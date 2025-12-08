@@ -15,6 +15,9 @@ Displays various IDs in tooltips when hovering over items, spells, NPCs, quests,
 ### NPC Alive Time
 Shows how long an NPC has been alive in the tooltip, including spawn time.
 
+### Minimap Clock with Seconds
+Replaces the default minimap clock to display seconds when using local time (e.g., `11:22:35`). Respects your 12h/24h time format settings.
+
 ### Quest ID Display
 - **Objective Tracker**: Displays `[QuestID]` before quest names in the tracker (under minimap)
 - **Quest Log**: Shows QuestID in the top-right of the quest details panel
