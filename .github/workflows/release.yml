@@ -1,22 +1,18 @@
-name: Package and Release
+name: Package Addon
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [ main ]
+    tags: [ '*' ]
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
-    
-    env:
-      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
-    
+
     steps:
-      - name: Clone project
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: Package and release
+      - uses: actions/checkout@v4
+
+      - name: Create Package
         uses: BigWigsMods/packager@v2
+        env:
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
