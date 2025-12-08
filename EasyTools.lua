@@ -331,90 +331,32 @@ if QuestObjectiveTracker and QuestObjectiveTracker.AddBlock then
 end
 
 -------------------------------------------------------------------------------
--- Quest ID in Quest Log (Map Quest Details)
+-- Quest ID in Quest Dialog (Accept/Turn-in) - Prepend to title
 -------------------------------------------------------------------------------
 
-local questLogIDText
-
-local questLogIDFrame
-
-local function SetupQuestLogIDText()
-    if questLogIDText then return end
-    if not QuestMapFrame or not QuestMapFrame.DetailsFrame then return end
-    
-    local detailsFrame = QuestMapFrame.DetailsFrame
-    
-    -- Create a small frame with high strata to be above everything
-    questLogIDFrame = CreateFrame("Frame", nil, detailsFrame)
-    questLogIDFrame:SetFrameStrata("HIGH")
-    questLogIDFrame:SetSize(60, 20)
-    questLogIDFrame:SetPoint("TOPRIGHT", detailsFrame, "TOPRIGHT", -10, -12)
-    
-    questLogIDText = questLogIDFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    questLogIDText:SetPoint("CENTER", questLogIDFrame, "CENTER", 0, 0)
-    questLogIDText:SetTextColor(1, 1, 1)
-end
-
-local function UpdateQuestLogID()
-    SetupQuestLogIDText()
-    if not questLogIDText then return end
-    
-    local questID = QuestMapFrame.DetailsFrame.questID or C_SuperTrack.GetSuperTrackedQuestID()
-    if questID and questID > 0 then
-        questLogIDText:SetText(questID)
-        questLogIDText:Show()
-    else
-        questLogIDText:Hide()
+if QuestUtils_DecorateQuestText then
+    local originalDecorateQuestText = QuestUtils_DecorateQuestText
+    QuestUtils_DecorateQuestText = function(questID, title, useLargeIcon, ...)
+        local result = originalDecorateQuestText(questID, title, useLargeIcon, ...)
+        if questID and questID > 0 and result and not result:match("%[%d+%]") then
+            -- Check if there's an icon with hyperlink (|H...|h|A:...|a|h) or atlas (|A:...|a) or texture (|T...|t)
+            local prefix, rest = result:match("^(|H.-|h|A.-|a|h)(.*)$")
+            if not prefix then
+                prefix, rest = result:match("^(|A.-|a)(.*)$")
+            end
+            if not prefix then
+                prefix, rest = result:match("^(|T.-|t)(.*)$")
+            end
+            if prefix then
+                -- Insert ID after the icon/hyperlink
+                return prefix .. "[" .. questID .. "]" .. rest
+            else
+                -- No icon, just prepend
+                return "[" .. questID .. "] " .. result
+            end
+        end
+        return result
     end
-end
-
-if QuestMapFrame then
-    QuestMapFrame:HookScript("OnShow", UpdateQuestLogID)
-    if QuestMapFrame.DetailsFrame then
-        QuestMapFrame.DetailsFrame:HookScript("OnShow", UpdateQuestLogID)
-    end
-    hooksecurefunc("QuestMapFrame_ShowQuestDetails", function(questID)
-        SetupQuestLogIDText()
-        if questLogIDText and questID then
-            questLogIDText:SetText(questID)
-            questLogIDText:Show()
-        end
-    end)
-end
-
--------------------------------------------------------------------------------
--- Quest ID in Quest Dialog (Accept/Turn-in)
--------------------------------------------------------------------------------
-
-local questFrameIDText
-
-local function SetupQuestFrameIDText()
-    if questFrameIDText then return end
-    if not QuestFrame then return end
-    
-    questFrameIDText = QuestFrame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    questFrameIDText:SetPoint("TOPRIGHT", QuestFrame, "TOPRIGHT", -30, -38)
-    questFrameIDText:SetTextColor(1, 1, 1)
-    questFrameIDText:SetDrawLayer("OVERLAY", 7)
-end
-
-if QuestFrame then
-    QuestFrame:HookScript("OnShow", function()
-        SetupQuestFrameIDText()
-        local questID = GetQuestID and GetQuestID()
-        if questID and questID > 0 and questFrameIDText then
-            questFrameIDText:SetText(questID)
-            questFrameIDText:Show()
-        elseif questFrameIDText then
-            questFrameIDText:Hide()
-        end
-    end)
-    
-    QuestFrame:HookScript("OnHide", function()
-        if questFrameIDText then
-            questFrameIDText:Hide()
-        end
-    end)
 end
 
 -------------------------------------------------------------------------------
