@@ -5,6 +5,7 @@
 ## Author: Haidenz
 ## IconTexture: Interface\ICONS\INV_Misc_Wrench_01
 ## SavedVariables: EasyToolsDB
+## Category: Development Tools
 
 Modules\ItemContext.lua
 Modules\TooltipKinds.lua
