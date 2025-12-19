@@ -20,8 +20,24 @@ local function Print(...)
     print("|cFF33FF99EasyTools|r:", ...) 
 end
 
+local function GetTimestampString()
+	-- https://wowpedia.fandom.com/wiki/Console_variables
+	-- This option is enabled/disabled in Options->Social->Chat Timestamps
+	local formatString = C_CVar.GetCVar("showTimestamps")
+	if not formatString or formatString == "none" then
+		return ""
+	end
+	
+	-- Format string is like "%H:%M:%S " or like "%I:%M:%S %p " for PM/AM users
+	-- Return date format without space at the end
+	return date(formatString):gsub("%s+$", "")
+end
+
 local function PrintQuest(...)
-    print(...)
+	local ts = GetTimestampString()
+	if ts ~= "" then ts = "[" .. ts .. "] " end
+	
+    print(ts .. string.join(" ", tostringall(...)))
 end
 
 local function hook(table, fn, cb)
