@@ -28,23 +28,22 @@ local function Print(...)
 end
 
 local function GetTimestampString()
-	-- https://wowpedia.fandom.com/wiki/Console_variables
-	-- This option is enabled/disabled in Options->Social->Chat Timestamps
-	local formatString = C_CVar.GetCVar("showTimestamps")
-	if not formatString or formatString == "none" then
+	local setting = SettingsStorage["EASYTOOLS_TIMESTAMP_FORMAT_KEY"]
+	local index = setting:GetValue();
+	
+	if index > #BlizzardTimeFormat then
 		return ""
 	end
 	
-	-- Format string is like "%H:%M:%S " or like "%I:%M:%S %p " for PM/AM users
-	-- Return date format without space at the end
-	return date(formatString):gsub("%s+$", "")
+	if BlizzardTimeFormat[index] == "None" then
+		return ""
+	end
+	
+	return date(BlizzardTimeFormat[index]):gsub("%s+$", "")
 end
 
 local function PrintQuest(...)
-	local ts = GetTimestampString()
-	if ts ~= "" then ts = "[" .. ts .. "] " end
-	
-    print(ts .. string.join(" ", tostringall(...)))
+    print(...)
 end
 
 local function hook(table, fn, cb)
@@ -981,6 +980,35 @@ else
 end
 
 -------------------------------------------------------------------------------
+-- Chat Frame
+-------------------------------------------------------------------------------
+local function EasyTools_ChatFrame_OnAddMessage(frame, text, ...)
+	local TIMESTAMP_COLOR_CODE = "|cff808080"
+
+    if text and type(text) == "string" and text ~= "" then
+        if not text:find("^" .. TIMESTAMP_COLOR_CODE .. ".-" .. "|r") then
+			local ts = GetTimestampString()
+			if ts ~= "" then
+				text = TIMESTAMP_COLOR_CODE .. "[" .. ts .. "]|r " .. text
+			end
+        end
+    end
+	
+    return frame.OldAddMessage(frame, text, ...)
+end
+
+local function EasyTools_ChatFrame_Initialize()
+    for i = 1, NUM_CHAT_WINDOWS do
+        local frame = _G["ChatFrame" .. i]
+        
+        if frame and not frame.OldAddMessage then
+            frame.OldAddMessage = frame.AddMessage
+            frame.AddMessage = EasyTools_ChatFrame_OnAddMessage
+        end
+    end
+end
+
+-------------------------------------------------------------------------------
 -- Events
 -------------------------------------------------------------------------------
 
@@ -1009,6 +1037,8 @@ EventFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
             -- Start minimap clock ticker (every 1 second)
             C_Timer.NewTicker(1, UpdateMinimapClock)
 			EasyTools_InitOptionsSettings()
+			EasyTools_ChatFrame_Initialize()
+			
             Print("Loaded - IDs in tooltips, NPC alive time, quest tracking enabled")
         elseif arg1 == "Blizzard_AchievementUI" then
             -- Achievement UI hooks
