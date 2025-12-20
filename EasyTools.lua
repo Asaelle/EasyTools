@@ -1,6 +1,13 @@
 local addonName, EasyTools = ...
 
 -------------------------------------------------------------------------------
+-- Defines
+-------------------------------------------------------------------------------
+local SettingsStorage = {}
+local BlizzardTimeFormat = { "None", "%I:%M", "%I:%M:%S", "%I:%M %p", "%I:%M:%S %p", "%H:%M", "%H:%M:%S" }
+local BlizzardTimeFormatExample = { "None", "03:27", "03:27:32", "03:27 PM", "03:27:32 PM", "15:27", "15:27:32" }
+
+-------------------------------------------------------------------------------
 -- API Compatibility
 -------------------------------------------------------------------------------
 
@@ -66,6 +73,72 @@ local function contains(tbl, element)
         if value == element then return true end
     end
     return false
+end
+
+-------------------------------------------------
+-- Options Settings
+-------------------------------------------------
+local function EasyTools_InitOptionsSettings()
+	if type(EasyToolsDB) ~= "table" then EasyToolsDB = {} end
+    if type(EasyToolsDB.Settings) ~= "table" then EasyToolsDB.Settings = {} end
+	
+	local SETTINGS_DEFS = {
+		ChatTimestampFormat = {
+			name = "Timestamp Format",
+			description = "Select one format from the list.",
+			var = "EASYTOOLS_TIMESTAMP_FORMAT_VAR",
+			key = "EASYTOOLS_TIMESTAMP_FORMAT_KEY",
+			type = Settings.VarType.Number,
+			default = 1,
+			dropdown = BlizzardTimeFormatExample
+		}
+	}
+	
+	local category = Settings.RegisterVerticalLayoutCategory(addonName)
+	for key, def in pairs(SETTINGS_DEFS) do
+		local set = Settings.RegisterAddOnSetting(
+			category,
+			def.var,
+			def.key,
+			EasyToolsDB.Settings,
+			def.type,
+			def.name,
+			def.default
+		)
+		
+		if def.type == "boolean" then
+			Settings.CreateCheckbox(
+				category,
+				set,
+				def.description
+			)
+		elseif def.type == "number" then
+			if def.dropdown ~= nil then
+				local function GetOptions()
+					local container = Settings.CreateControlTextContainer()
+					for i, v in ipairs(def.dropdown) do
+						container:Add(i, v)
+					end
+					return container:GetData()
+				end
+				
+				Settings.CreateDropdown(
+					category,
+					set,
+					GetOptions,
+					def.description
+				)
+			end
+		end
+		
+		Settings.SetOnValueChangedCallback(def.var, function(cvar, setting, newValue)
+			EasyToolsDB.Settings[setting.variableKey] = newValue
+		end)
+		
+		SettingsStorage[set.variableKey] = set
+	end
+	
+	Settings.RegisterAddOnCategory(category)
 end
 
 -------------------------------------------------------------------------------
@@ -935,6 +1008,7 @@ EventFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
         if arg1 == addonName then
             -- Start minimap clock ticker (every 1 second)
             C_Timer.NewTicker(1, UpdateMinimapClock)
+			EasyTools_InitOptionsSettings()
             Print("Loaded - IDs in tooltips, NPC alive time, quest tracking enabled")
         elseif arg1 == "Blizzard_AchievementUI" then
             -- Achievement UI hooks
