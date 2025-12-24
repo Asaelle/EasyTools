@@ -1,10 +1,11 @@
-## Interface: 110207, 110100, 110105
+## Interface: 110207, 110100, 110105, 120001
 ## Title: EasyTools
 ## Version: 1.0.3
 ## Notes: Adds IDs to tooltips, NPC alive time, and quest tracking in chat
 ## Author: Haidenz
 ## IconTexture: Interface\ICONS\INV_Misc_Wrench_01
 ## SavedVariables: EasyToolsDB
+## Category: Development Tools
 
 Modules\ItemContext.lua
 Modules\TooltipKinds.lua
