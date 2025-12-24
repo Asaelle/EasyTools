@@ -1,6 +1,13 @@
 local addonName, EasyTools = ...
 
 -------------------------------------------------------------------------------
+-- Defines
+-------------------------------------------------------------------------------
+local SettingsStorage = {}
+local BlizzardTimeFormat = { "None", "%I:%M", "%I:%M:%S", "%I:%M %p", "%I:%M:%S %p", "%H:%M", "%H:%M:%S" }
+local BlizzardTimeFormatExample = { "None", "03:27", "03:27:32", "03:27 PM", "03:27:32 PM", "15:27", "15:27:32" }
+
+-------------------------------------------------------------------------------
 -- API Compatibility
 -------------------------------------------------------------------------------
 
@@ -21,23 +28,22 @@ local function Print(...)
 end
 
 local function GetTimestampString()
-	-- https://wowpedia.fandom.com/wiki/Console_variables
-	-- This option is enabled/disabled in Options->Social->Chat Timestamps
-	local formatString = C_CVar.GetCVar("showTimestamps")
-	if not formatString or formatString == "none" then
+	local setting = SettingsStorage["EASYTOOLS_TIMESTAMP_FORMAT_KEY"]
+	local index = setting:GetValue();
+	
+	if index > #BlizzardTimeFormat then
 		return ""
 	end
 	
-	-- Format string is like "%H:%M:%S " or like "%I:%M:%S %p " for PM/AM users
-	-- Return date format without space at the end
-	return date(formatString):gsub("%s+$", "")
+	if BlizzardTimeFormat[index] == "None" then
+		return ""
+	end
+	
+	return date(BlizzardTimeFormat[index]):gsub("%s+$", "")
 end
 
 local function PrintQuest(...)
-	local ts = GetTimestampString()
-	if ts ~= "" then ts = "[" .. ts .. "] " end
-	
-    print(ts .. string.join(" ", tostringall(...)))
+    print(...)
 end
 
 local function hook(table, fn, cb)
@@ -66,6 +72,72 @@ local function contains(tbl, element)
         if value == element then return true end
     end
     return false
+end
+
+-------------------------------------------------
+-- Options Settings
+-------------------------------------------------
+local function EasyTools_InitOptionsSettings()
+	if type(EasyToolsDB) ~= "table" then EasyToolsDB = {} end
+    if type(EasyToolsDB.Settings) ~= "table" then EasyToolsDB.Settings = {} end
+	
+	local SETTINGS_DEFS = {
+		ChatTimestampFormat = {
+			name = "Timestamp Format",
+			description = "Select one format from the list.",
+			var = "EASYTOOLS_TIMESTAMP_FORMAT_VAR",
+			key = "EASYTOOLS_TIMESTAMP_FORMAT_KEY",
+			type = Settings.VarType.Number,
+			default = 1,
+			dropdown = BlizzardTimeFormatExample
+		}
+	}
+	
+	local category = Settings.RegisterVerticalLayoutCategory(addonName)
+	for key, def in pairs(SETTINGS_DEFS) do
+		local set = Settings.RegisterAddOnSetting(
+			category,
+			def.var,
+			def.key,
+			EasyToolsDB.Settings,
+			def.type,
+			def.name,
+			def.default
+		)
+		
+		if def.type == "boolean" then
+			Settings.CreateCheckbox(
+				category,
+				set,
+				def.description
+			)
+		elseif def.type == "number" then
+			if def.dropdown ~= nil then
+				local function GetOptions()
+					local container = Settings.CreateControlTextContainer()
+					for i, v in ipairs(def.dropdown) do
+						container:Add(i, v)
+					end
+					return container:GetData()
+				end
+				
+				Settings.CreateDropdown(
+					category,
+					set,
+					GetOptions,
+					def.description
+				)
+			end
+		end
+		
+		Settings.SetOnValueChangedCallback(def.var, function(cvar, setting, newValue)
+			EasyToolsDB.Settings[setting.variableKey] = newValue
+		end)
+		
+		SettingsStorage[set.variableKey] = set
+	end
+	
+	Settings.RegisterAddOnCategory(category)
 end
 
 -------------------------------------------------------------------------------
@@ -908,6 +980,35 @@ else
 end
 
 -------------------------------------------------------------------------------
+-- Chat Frame
+-------------------------------------------------------------------------------
+local function EasyTools_ChatFrame_OnAddMessage(frame, text, ...)
+	local TIMESTAMP_COLOR_CODE = "|cff808080"
+
+    if text and type(text) == "string" and text ~= "" then
+        if not text:find("^" .. TIMESTAMP_COLOR_CODE .. ".-" .. "|r") then
+			local ts = GetTimestampString()
+			if ts ~= "" then
+				text = TIMESTAMP_COLOR_CODE .. "[" .. ts .. "]|r " .. text
+			end
+        end
+    end
+	
+    return frame.OldAddMessage(frame, text, ...)
+end
+
+local function EasyTools_ChatFrame_Initialize()
+    for i = 1, NUM_CHAT_WINDOWS do
+        local frame = _G["ChatFrame" .. i]
+        
+        if frame and not frame.OldAddMessage then
+            frame.OldAddMessage = frame.AddMessage
+            frame.AddMessage = EasyTools_ChatFrame_OnAddMessage
+        end
+    end
+end
+
+-------------------------------------------------------------------------------
 -- Events
 -------------------------------------------------------------------------------
 
@@ -935,6 +1036,9 @@ EventFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
         if arg1 == addonName then
             -- Start minimap clock ticker (every 1 second)
             C_Timer.NewTicker(1, UpdateMinimapClock)
+			EasyTools_InitOptionsSettings()
+			EasyTools_ChatFrame_Initialize()
+			
             Print("Loaded - IDs in tooltips, NPC alive time, quest tracking enabled")
         elseif arg1 == "Blizzard_AchievementUI" then
             -- Achievement UI hooks
