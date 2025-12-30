@@ -217,10 +217,9 @@ local disabledKinds = EasyTools.disabledKinds
 local kindsByID = EasyTools.kindsByID
 
 local function addLine(tooltip, id, kind)
-    if isSecret(id) then return end
     if not id or id == "" or not tooltip or not tooltip.GetName then return end
     if disabledKinds[kind] then return end
-
+	
     local ok, name = pcall(getTooltipName, tooltip)
     if not ok or not name then return end
 
@@ -228,8 +227,7 @@ local function addLine(tooltip, id, kind)
     for i = tooltip:NumLines(), 1, -1 do
         frame = _G[name .. "TextLeft" .. i]
         if frame then text = frame:GetText() end
-        if isSecret(text) then return end
-        if text and string.find(text, kinds[kind]) then return end
+        if not isSecret(text) and text and string.find(text, kinds[kind]) then return end
     end
 
     local multiple = type(id) == "table"
@@ -686,6 +684,13 @@ end
 if TooltipDataProcessor then
     TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
         if not data or not data.type then return end
+		
+		-- Blizz removed access while in combat for spells/auras
+		if isSecret(data.type) then 
+			add(tooltip, data.id, "spell")
+			return
+		end
+		
         local kind = kindsByID[tonumber(data.type)]
 
         if kind == "unit" and data and data.guid then
@@ -985,14 +990,14 @@ end
 local function EasyTools_ChatFrame_OnAddMessage(frame, text, ...)
 	local TIMESTAMP_COLOR_CODE = "|cff808080"
 
-    if text and type(text) == "string" and text ~= "" then
-        if not text:find("^" .. TIMESTAMP_COLOR_CODE .. ".-" .. "|r") then
+	if text and type(text) == "string" and text ~= "" then
+		if not text:find("^" .. TIMESTAMP_COLOR_CODE .. ".-" .. "|r") then
 			local ts = GetTimestampString()
 			if ts ~= "" then
 				text = TIMESTAMP_COLOR_CODE .. "[" .. ts .. "]|r " .. text
 			end
-        end
-    end
+		end
+	end
 	
     return frame.OldAddMessage(frame, text, ...)
 end
