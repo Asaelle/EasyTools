@@ -12,7 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create Package
+      - name: Create Retail Package
         uses: BigWigsMods/packager@v2
         env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
