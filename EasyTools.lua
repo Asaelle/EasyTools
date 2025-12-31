@@ -404,17 +404,27 @@ end
 -- Quest ID in Objective Tracker
 -------------------------------------------------------------------------------
 
-if QuestObjectiveTracker and QuestObjectiveTracker.AddBlock then
-    hooksecurefunc(QuestObjectiveTracker, "AddBlock", function(self, block)
-        if block and block.id and block.HeaderText then
-            local questID = block.id
-            local currentText = block.HeaderText:GetText()
-            if currentText and not currentText:match("^%[%d+%]") then
-                block.HeaderText:SetText("[" .. questID .. "] " .. currentText)
-            end
-        end
-    end)
+local function EasyTools_AddQuestIdToObjectiveTracker(_, block)
+    if not block or not block.id or not block.HeaderText then
+        return
+    end
+
+    local text = block.HeaderText:GetText()
+    if text and not text:match("^%[%d+%]") then
+        block.HeaderText:SetText(("[%d] %s"):format(block.id, text))
+    end
 end
+
+local function EasyTools_HookTracker(tracker)
+    if tracker and tracker.AddBlock then
+        hooksecurefunc(tracker, "AddBlock", EasyTools_AddQuestIdToObjectiveTracker)
+    end
+end
+
+EasyTools_HookTracker(QuestObjectiveTracker)           -- normal quests
+EasyTools_HookTracker(CampaignQuestObjectiveTracker)   -- campaign quests
+EasyTools_HookTracker(WorldQuestObjectiveTracker)      -- world quests
+EasyTools_HookTracker(BonusObjectiveTracker)           -- bonus objectives
 
 -------------------------------------------------------------------------------
 -- Quest ID in Quest Dialog (Accept/Turn-in) - Prepend to title
