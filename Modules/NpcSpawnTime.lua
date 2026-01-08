@@ -30,8 +30,8 @@ local function ShowNPCAliveTime(tooltip)
     local _, unit = tooltip:GetUnit()
     if not unit then return end
 
-    local guid = UnitGUID(unit)
-    if not guid or isSecret(guid) then return end
+    local success, guid = pcall(UnitGUID, unit)
+    if not success or not guid then return end
 
     -- Check Unit Type
     -- GUID Format: "Type-Zero-ServerID-InstanceID-ZoneUID-ID-SpawnTime"
