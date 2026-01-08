@@ -1,62 +1,47 @@
 # EasyTools
 
-A World of Warcraft addon that combines multiple utility features for tracking IDs, NPC information, and quest events.
+**EasyTools** is a specialized toolkit designed for **developers, testers, and power users** in World of Warcraft.
 
-## Features
+Its primary purpose is to expose hidden game engine data such as internal IDs, spawn timers, and raw quest events directly in the interface. By providing precise logging and coordinate tracking, it serves as an essential utility for debugging, data mining, and verifying game mechanics.
 
-### ID Tooltip Display
-Displays various IDs in tooltips when hovering over items, spells, NPCs, quests, achievements, etc.
+## Key Capabilities
 
-- **ItemId**, **SpellId**, **CreatureId**, **QuestId**, **AchievementId**, **CurrencyId**, **MountId**, etc.
-- **BonusId**, **GemId**, **EnchantId** for items
-- **TraitNodeId**, **TraitEntryId**, **TraitDefinitionId** for talents
-- **Context** with human-readable name (e.g., `28 (World Quest 4)`)
+### 🔍 Deep Data Inspection (IDs)
 
-### NPC Alive Time
-Shows how long an NPC has been alive in the tooltip, including spawn time.
+Instantly view internal database IDs in tooltips without external websites. Essential for distinguishing between different versions of items or spells.
 
-### Minimap Clock with Seconds
-Replaces the default minimap clock to display seconds when using local time (e.g., `11:22:35`). Respects your 12h/24h time format settings.
+- **Core IDs:** `ItemId`, `SpellId`, `CreatureId`, `QuestId`, `AchievementId`, `CurrencyId`, `MountId`.
+- **Item Data:** `BonusId`, `GemId`, `EnchantId`.
+- **Talent Data:** `TraitNodeId`, `TraitEntryId`, `TraitDefinitionId`.
+- **Context:** Displays the source context (e.g., `28 (World Quest 4)`).
 
-### Quest ID Display
-- **Objective Tracker**: Displays `[QuestID]` before quest names in the tracker (under minimap)
-- **Quest Log**: Shows QuestID in the top-right of the quest details panel
-- **Quest Dialog**: Shows QuestID when accepting or turning in quests
+### ⏱️ Precision Timing
 
-### Quest Event Tracking
-Announces quest events in chat:
-- **Quest accepted** (cyan)
-- **Quest complete** (green)
-- **Quest removed** (red)
-- **Quest unflagged** (orange)
+- **NPC Alive Time:** Displays exactly how long an NPC has been alive (including spawn time) in the tooltip.
+- **Minimap Seconds:** Adds a "seconds" display to the minimap clock (e.g., `11:22:35`) for precise event timing.
 
-Each announcement includes: QuestID, Quest Name, Map, and Coordinates.
+### 📜 Quest Debugging & Logging
 
-### Quest Event Logging
-All quest events are saved to `SavedVariables` for later review.
+A complete suite for tracking quest states and locations.
 
-Format: `time;questID;name;type;map;x;y`
+- **Visual IDs:** Injects `[QuestID]` into the Objective Tracker, Quest Log, and NPC Dialogs.
+- **Event Announcements:** Color-coded chat alerts for quest state changes:
+  - **Accepted** (Cyan)
+  - **Completed** (Green)
+  - **Removed** (Red)
+  - **Unflagged** (Orange)
+- **Persistent Logging:** Automatically records all quest activity to `SavedVariables` with granular data:
+  `Timestamp; QuestID; Name; Status; MapZone; X-Coord; Y-Coord`
 
-Example:
+## Configuration & Usage
+
+### SavedVariables
+
+Quest history is stored in `EasyToolsDB.QuestLog` in the following format:
+
 ```
 "2025-12-07 23:02:35;83105;Rush-order Requisition;accepted;Dornogal;53.0;52.5"
 ```
-
-## File Structure
-
-```
-EasyTools/
-├── EasyTools.toc           # Addon metadata
-├── EasyTools.lua           # Main addon logic
-├── README.md               # This file
-└── Modules/
-    ├── ItemContext.lua     # Item context enum (Dungeon Normal, Raid Mythic, etc.)
-    └── TooltipKinds.lua    # Tooltip ID types and mappings
-```
-
-## SavedVariables
-
-- **EasyToolsDB.QuestLog**: Array of quest event log entries
 
 ## Installation
 
@@ -71,7 +56,25 @@ EasyTools/
 ## Credits
 
 Based on:
+
 - **idTip** - ID tooltip display
 - **NPCTime** - NPC alive time
 - **QuestsChanged** - Quest tracking
 - **AllTheThings** - Quest name retrieval and dual-step completion detection
+
+## File Structure
+
+```
+EasyTools/
+├── Defines.lua          # Global defines
+├── Utils.lua            # Global set of utility functions
+├── Settings.lua         # Settings file for addon options
+├── EasyTools.toc        # Addon metadata
+├── EasyTools.lua        # Main addon logic
+├── README.md            # This file
+└── Modules/
+    ├── TooltipID.lua    # Tooltip IDs
+    └── QuestId.lua      # Quest IDs
+    └── ...
+    └── ...
+```
