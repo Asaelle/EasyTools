@@ -2,7 +2,7 @@ local addonName, EasyTools = ...
 local Utils = EasyTools.Utils
 local Modules = EasyTools.Modules
 
-local TooltipId = Modules.TooltipId
+local TooltipID = Modules.TooltipID
 local QuestTracker = Modules.QuestTracker
 local Chat = Modules.Chat
 
@@ -44,7 +44,7 @@ EventFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
             Utils.SendMessage("Loaded - IDs in tooltips, NPC alive time, quest tracking enabled")
         elseif arg1 == "Blizzard_AchievementUI" then
             if AchievementTemplateMixin then
-                hook(AchievementTemplateMixin, "OnEnter", TooltipId.achievementOnEnter)
+                hook(AchievementTemplateMixin, "OnEnter", TooltipID.achievementOnEnter)
                 hook(AchievementTemplateMixin, "OnLeave", GameTooltip_Hide)
 
                 local hooked = {}
@@ -54,7 +54,7 @@ EventFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
                         local frame = self[pool][index]
                         frame.___index = index
                         if frame and not hooked[frame] then
-                            hookScript(frame, "OnEnter", TooltipId.criteriaOnEnter(index))
+                            hookScript(frame, "OnEnter", TooltipID.criteriaOnEnter(index))
                             hookScript(frame, "OnLeave", GameTooltip_Hide)
                             hooked[frame] = true
                         end
@@ -66,14 +66,14 @@ EventFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
                 hook(AchievementTemplateMixin:GetObjectiveFrame(), "GetProgressBar", getter("progressBars"))
             elseif AchievementFrameAchievementsContainer then
                 for _, button in ipairs(AchievementFrameAchievementsContainer.buttons) do
-                    hookScript(button, "OnEnter", TooltipId.achievementOnEnter)
+                    hookScript(button, "OnEnter", TooltipID.achievementOnEnter)
                     hookScript(button, "OnLeave", GameTooltip_Hide)
 
                     local hooked = {}
                     hook(_G, "AchievementButton_GetCriteria", function(index, renderOffScreen)
                         local frame = _G["AchievementFrameCriteria" .. (renderOffScreen and "OffScreen" or "") .. index]
                         if frame and not hooked[frame] then
-                            hookScript(frame, "OnEnter", TooltipId.criteriaOnEnter(index))
+                            hookScript(frame, "OnEnter", TooltipID.criteriaOnEnter(index))
                             hookScript(frame, "OnLeave", GameTooltip_Hide)
                             hooked[frame] = true
                         end
@@ -96,23 +96,23 @@ EventFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
                     end
                 end
 
-                if #visualIDs > 0 then TooltipId.add(GameTooltip, visualIDs, "visual") end
-                if #sourceIDs > 0 then TooltipId.add(GameTooltip, sourceIDs, "source") end
-                if #itemIDs > 0 then TooltipId.add(GameTooltip, itemIDs, "item") end
+                if #visualIDs > 0 then TooltipID.add(GameTooltip, visualIDs, "visual") end
+                if #sourceIDs > 0 then TooltipID.add(GameTooltip, sourceIDs, "source") end
+                if #itemIDs > 0 then TooltipID.add(GameTooltip, itemIDs, "item") end
             end)
 
             hookScript(PetJournalPetCardPetInfo, "OnEnter", function()
                 if not C_PetJournal or not C_PetBattles.GetPetInfoBySpeciesID then return end
                 if PetJournalPetCard.speciesID then
                     local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(PetJournalPetCard.speciesID))
-                    TooltipId.add(GameTooltip, PetJournalPetCard.speciesID, "species")
-                    TooltipId.add(GameTooltip, npcId, "unit")
+                    TooltipID.add(GameTooltip, PetJournalPetCard.speciesID, "species")
+                    TooltipID.add(GameTooltip, npcId, "unit")
                 end
             end)
         elseif arg1 == "Blizzard_GarrisonUI" then
             hook(_G, "AddAutoCombatSpellToTooltip", function(tooltip, info)
                 if info and info.autoCombatSpellID then
-                    TooltipId.add(tooltip, info.autoCombatSpellID, "ability")
+                    TooltipID.add(tooltip, info.autoCombatSpellID, "ability")
                 end
             end)
         end
