@@ -2,16 +2,17 @@ local _, EasyTools = ...
 local Utils = EasyTools.Utils
 
 -------------------------------------------------------------------------------
--- Chat Frame
+-- Chat Frame Timestamp
 -------------------------------------------------------------------------------
 local function OnAddMessage(frame, text, ...)
-    local TIMESTAMP_COLOR_CODE = "|cff808080"
-
     if text and type(text) == "string" and text ~= "" then
-        if not text:find("^" .. TIMESTAMP_COLOR_CODE .. ".-" .. "|r") then
-            local ts = Utils.GetTimestampString()
-            if ts ~= "" then
-                text = TIMESTAMP_COLOR_CODE .. "[" .. ts .. "]|r " .. text
+        local ts = Utils.GetTimestampString()
+        if ts and ts ~= "" then
+            local TIMESTAMP_COLOR_CODE = "|cff808080"
+            -- Prevent double-stamping if another addon (or this one) already added a gray timestamp
+            -- We look for the specific gray color code at the start
+            if not text:find("^" .. TIMESTAMP_COLOR_CODE) then
+                text = string.format("%s[%s]|r %s", TIMESTAMP_COLOR_CODE, ts, text)
             end
         end
     end
@@ -23,7 +24,8 @@ local function Initialize()
     for i = 1, NUM_CHAT_WINDOWS do
         local frame = _G["ChatFrame" .. i]
 
-        if frame and not frame.OldAddMessage then
+        -- Hook only if not already hooked
+        if frame and frame.AddMessage and not frame.OldAddMessage then
             frame.OldAddMessage = frame.AddMessage
             frame.AddMessage = OnAddMessage
         end

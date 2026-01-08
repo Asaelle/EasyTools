@@ -145,6 +145,22 @@ local function GetCurrentMapInfo()
     return mapdata, x, y
 end
 
+local function NotifyQuestUpdate(statusType, questID, questName, mapName, x, y)
+    local msgFormat = "@ %s (%.1f, %.1f)"
+    local locString = string.format(msgFormat, mapName or "Unknown", x or 0, y or 0)
+    questName = questName or "Unknown"
+
+    if statusType == "complete" then
+        print("|cff00ff00Quest complete:|r", questID, questName, locString)
+    elseif statusType == "accepted" then
+        print("|cff00aaffQuest accepted:|r", questID, questName, locString)
+    elseif statusType == "removed" then
+        print("|cffff6666Quest removed:|r", questID, questName, locString)
+    elseif statusType == "unflagged" then
+        print("|cffffaa00Quest unflagged:|r", questID, questName, locString)
+    end
+end
+
 -- Export
 if type(EasyTools.Utils) ~= "table" then EasyTools.Utils = {} end
 EasyTools.Utils = {
@@ -160,4 +176,5 @@ EasyTools.Utils = {
     UpdateMinimapClock = UpdateMinimapClock,
     GetQuestTitle = GetQuestTitle,
     GetCurrentMapInfo = GetCurrentMapInfo,
+    NotifyQuestUpdate = NotifyQuestUpdate,
 }

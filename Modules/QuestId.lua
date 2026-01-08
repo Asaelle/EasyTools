@@ -1,54 +1,84 @@
 local _, EasyTools = ...
 local Utils = EasyTools.Utils
-
 local hook = Utils.hook
 
 -------------------------------------------------------------------------------
--- Quest ID in Objective Tracker
+-- 1. Objective Tracker (Watch Frame)
 -------------------------------------------------------------------------------
-
 local function AddQuestIdToObjectiveTracker(_, block)
     if not (EasyToolsDB and EasyToolsDB.Settings and EasyToolsDB.Settings.showQuestIDLog) then return end
-    if not block or not block.id or not block.HeaderText then return end
+    if not block or not block.id then return end
 
-    local text = block.HeaderText:GetText()
+    -- Different tracker types store text in different places, usually HeaderText
+    local textLine = block.HeaderText
+    if not textLine then return end
+
+    local text = textLine:GetText()
+    -- Check if ID is already there (starts with [123])
     if text and not text:match("^%[%d+%]") then
-        block.HeaderText:SetText(("[%d] %s"):format(block.id, text))
+        textLine:SetText(("[%d] %s"):format(block.id, text))
     end
 end
 
-hook(QuestObjectiveTracker, "AddBlock", AddQuestIdToObjectiveTracker)
-hook(CampaignQuestObjectiveTracker, "AddBlock", AddQuestIdToObjectiveTracker)
-hook(WorldQuestObjectiveTracker, "AddBlock", AddQuestIdToObjectiveTracker)
-hook(BonusObjectiveTracker, "AddBlock", AddQuestIdToObjectiveTracker)
+-- Hook all tracker modules present in 11.0
+local trackers = {
+    QuestObjectiveTracker,
+    CampaignQuestObjectiveTracker,
+    WorldQuestObjectiveTracker,
+    BonusObjectiveTracker,
+    --  ScenarioObjectiveTracker,
+    --  AchievementObjectiveTracker,
+    --  ProfessionsRecipeTracker,
+    --  MonthlyActivitiesObjectiveTracker,
+}
+
+for _, tracker in pairs(trackers) do
+    if tracker then
+        hook(tracker, "AddBlock", AddQuestIdToObjectiveTracker)
+    end
+end
 
 -------------------------------------------------------------------------------
--- Quest ID in Quest Dialog (Accept/Turn-in) - Prepend to title
+-- 2. Quest Dialogs (Accept / Turn-in / Log Details)
 -------------------------------------------------------------------------------
-
 if QuestUtils_DecorateQuestText then
     local originalDecorateQuestText = QuestUtils_DecorateQuestText
+
     QuestUtils_DecorateQuestText = function(questID, title, useLargeIcon, ...)
         local result = originalDecorateQuestText(questID, title, useLargeIcon, ...)
-        if not (EasyToolsDB and EasyToolsDB.Settings and EasyToolsDB.Settings.showQuestIDFrame) then return result end
+
+        if not (EasyToolsDB and EasyToolsDB.Settings and EasyToolsDB.Settings.showQuestIDFrame) then
+            return result
+        end
 
         if questID and questID > 0 and result and not result:match("%[%d+%]") then
-            -- Check if there's an icon with hyperlink (|H...|h|A:...|a|h) or atlas (|A:...|a) or texture (|T...|t)
-            local prefix, rest = result:match("^(|H.-|h|A.-|a|h)(.*)$")
+            -- Determine if the title starts with an icon (Texture, Atlas, or Hyperlink)
+            -- We want: [Icon] [ID] Title
+
+            local prefix, rest
+
+            -- Hyperlink (rare in titles, but possible)
+            prefix, rest = result:match("^(|H.-|h|A.-|a|h)(.*)$")
+
+            -- Atlas (|A...|a)
             if not prefix then
                 prefix, rest = result:match("^(|A.-|a)(.*)$")
             end
+
+            -- Texture (|T...|t)
             if not prefix then
                 prefix, rest = result:match("^(|T.-|t)(.*)$")
             end
+
             if prefix then
-                -- Insert ID after the icon/hyperlink
-                return prefix .. "[" .. questID .. "]" .. rest
+                -- Insert ID after the icon
+                return prefix .. " [" .. questID .. "]" .. rest
             else
-                -- No icon, just prepend
+                -- No icon, just prepend ID
                 return "[" .. questID .. "] " .. result
             end
         end
+
         return result
     end
 end

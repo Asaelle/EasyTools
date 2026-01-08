@@ -2,6 +2,7 @@ local _, EasyTools = ...
 local Utils = EasyTools.Utils
 local GetQuestTitle = Utils.GetQuestTitle
 local GetCurrentMapInfo = Utils.GetCurrentMapInfo
+local NotifyQuestUpdate = Utils.NotifyQuestUpdate
 
 local quests = {}
 local new_quests = {}
@@ -39,7 +40,7 @@ local function LogQuest(questType, questID, questName, mapName, x, y)
     table.insert(EasyToolsDB.QuestLog, entry)
 end
 
--- Quest name retrieval with server request fallback (like AllTheThings)
+-- Quest name retrieval with server request fallback
 local questsRequested = {}
 local questsPendingAnnounce = {}
 
@@ -68,22 +69,9 @@ local function AnnounceQuest(questid, questType, mapdata, x, y)
     local posX, posY = (x or 0) * 100, (y or 0) * 100
 
     if questName then
-        -- Log to SavedVariables
+        -- Log and Announce immediately
         LogQuest(questType, questid, questName, mapName, posX, posY)
-
-        if questType == "complete" then
-            print("|cff00ff00Quest complete:|r", questid, questName,
-                string.format("@ %s (%.1f, %.1f)", mapName, posX, posY))
-        elseif questType == "accepted" then
-            print("|cff00aaffQuest accepted:|r", questid, questName,
-                string.format("@ %s (%.1f, %.1f)", mapName, posX, posY))
-        elseif questType == "removed" then
-            print("|cffff6666Quest removed:|r", questid, questName,
-                string.format("@ %s (%.1f, %.1f)", mapName, posX, posY))
-        elseif questType == "unflagged" then
-            print("|cffffaa00Quest unflagged:|r", questid, questName,
-                string.format("@ %s (%.1f, %.1f)", mapName, posX, posY))
-        end
+        NotifyQuestUpdate(questType, questid, questName, mapName, posX, posY)
     else
         -- Store for later announcement when name is loaded from server
         questsPendingAnnounce[questid] = {
@@ -96,62 +84,62 @@ local function AnnounceQuest(questid, questType, mapdata, x, y)
     end
 end
 
--- Timeout check for pending quests
+-- Handle the event where Blizzard replies with the quest data
+local function OnQuestDataLoaded(questID, success)
+    if not questID then return end
+    questsRequested[questID] = nil -- Clear request flag
+
+    local pending = questsPendingAnnounce[questID]
+    if pending and success then
+        local questName = GetQuestTitle(questID)
+        if questName then
+            quest_names[questID] = questName
+
+            -- Perform the log and announce
+            LogQuest(pending.type, questID, questName, pending.map, pending.x, pending.y)
+            NotifyQuestUpdate(pending.type, questID, questName, pending.map, pending.x, pending.y)
+        end
+        questsPendingAnnounce[questID] = nil
+    end
+end
+
+-- Timeout check for pending quests (if server never responds)
 local pendingCheckFrame = CreateFrame("Frame")
 pendingCheckFrame:SetScript("OnUpdate", function(self, elapsed)
     local now = GetTime()
     for questid, pending in pairs(questsPendingAnnounce) do
         if pending.timeout and now >= pending.timeout then
-            -- Timeout reached, announce with Unknown
+            -- Timeout reached, announce with "Unknown"
             local questName = quest_names[questid] or UNKNOWN
             LogQuest(pending.type, questid, questName, pending.map, pending.x, pending.y)
+            NotifyQuestUpdate(pending.type, questid, questName, pending.map, pending.x, pending.y)
 
-            if pending.type == "complete" then
-                print("|cff00ff00Quest complete:|r", questid, questName,
-                    string.format("@ %s (%.1f, %.1f)", pending.map, pending.x, pending.y))
-            elseif pending.type == "accepted" then
-                print("|cff00aaffQuest accepted:|r", questid, questName,
-                    string.format("@ %s (%.1f, %.1f)", pending.map, pending.x, pending.y))
-            elseif pending.type == "removed" then
-                print("|cffff6666Quest removed:|r", questid, questName,
-                    string.format("@ %s (%.1f, %.1f)", pending.map, pending.x, pending.y))
-            elseif pending.type == "unflagged" then
-                print("|cffffaa00Quest unflagged:|r", questid, questName,
-                    string.format("@ %s (%.1f, %.1f)", pending.map, pending.x, pending.y))
-            end
             questsPendingAnnounce[questid] = nil
         end
     end
 end)
 
--- Dual-step tracking like AllTheThings for detecting completed and unflagged quests
+-- Dual-step tracking like AllTheThings
 local completedQuestSequence = {}
 local MAX_QUEST_ID = 999999
 
 local function CheckQuests()
     local mapdata, x, y
 
-    -- Get fresh completed quests (sorted by Blizzard)
     local freshCompletes = C_QuestLog.GetAllCompletedQuestIDs()
-    if not freshCompletes or #freshCompletes == 0 then
-        return
-    end
+    if not freshCompletes or #freshCompletes == 0 then return end
 
-    -- First check = initialization (don't announce completed, but announce unflagged)
     local isFirstCheck = #completedQuestSequence == 0
 
-    -- Dual-step comparison (like AllTheThings)
     local Ci, Ni = 1, 1
     local c, n = completedQuestSequence[Ci] or MAX_QUEST_ID, freshCompletes[Ni] or MAX_QUEST_ID
 
     while c ~= MAX_QUEST_ID or n ~= MAX_QUEST_ID do
         if c == n then
-            -- Same questID, no change
-            Ci = Ci + 1
-            Ni = Ni + 1
+            Ci = Ci + 1; Ni = Ni + 1
             c, n = completedQuestSequence[Ci] or MAX_QUEST_ID, freshCompletes[Ni] or MAX_QUEST_ID
         elseif c < n then
-            -- Quest was in old list but not in new = unflagged
+            -- Unflagged
             if not SPAM_QUESTS[c] then
                 if not mapdata then mapdata, x, y = GetCurrentMapInfo() end
                 AnnounceQuest(c, "unflagged", mapdata, x, y)
@@ -160,7 +148,7 @@ local function CheckQuests()
             Ci = Ci + 1
             c = completedQuestSequence[Ci] or MAX_QUEST_ID
         else
-            -- Quest in new list but not in old = newly completed
+            -- Newly Completed
             if not isFirstCheck and not session_quests[n] and not SPAM_QUESTS[n] then
                 if not mapdata then mapdata, x, y = GetCurrentMapInfo() end
                 AnnounceQuest(n, "complete", mapdata, x, y)
@@ -173,10 +161,9 @@ local function CheckQuests()
         end
     end
 
-    -- Update the sequence for next comparison
     completedQuestSequence = freshCompletes
 
-    -- Check for removed/abandoned quests (from quest log, not completed)
+    -- Check for Removed / Accepted
     local current_active_quests = {}
     local numEntries = C_QuestLog.GetNumQuestLogEntries()
     for i = 1, numEntries do
@@ -186,7 +173,7 @@ local function CheckQuests()
         end
     end
 
-    -- Detect quests that were active but are no longer (and not completed)
+    -- Removed
     for questid, _ in pairs(active_quests) do
         if not current_active_quests[questid] and not quests[questid] then
             if not mapdata then mapdata, x, y = GetCurrentMapInfo() end
@@ -195,7 +182,7 @@ local function CheckQuests()
         end
     end
 
-    -- Detect newly accepted quests
+    -- Accepted
     if not isFirstCheck then
         for questid, _ in pairs(current_active_quests) do
             if not active_quests[questid] then
@@ -222,4 +209,5 @@ EasyTools.Modules.QuestTracker = {
     quest_names = quest_names,
     LogQuest = LogQuest,
     CheckQuests = CheckQuests,
+    OnQuestDataLoaded = OnQuestDataLoaded, -- Exported
 }
