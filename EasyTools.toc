@@ -1,7 +1,7 @@
 ## Interface: 110207, 110100, 110105, 120001
 ## Title: EasyTools
 ## Version: @project-version@
-## Notes: Adds IDs to tooltips, NPC alive time, quest tracking and timestamp in chat
+## Notes: EasyTools is a specialized toolkit designed for developers, testers, and power users in World of Warcraft.
 ## Author: Haidenz
 ## IconTexture: Interface\ICONS\INV_Misc_Wrench_01
 ## SavedVariables: EasyToolsDB
