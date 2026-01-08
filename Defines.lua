@@ -1,6 +1,11 @@
 local _, EasyTools = ...
+EasyTools.Defines = {}
 
-EasyTools.ItemContextNames = {
+EasyTools.Defines.BlizzardTimeFormat = { "None", "%I:%M", "%I:%M:%S", "%I:%M %p", "%I:%M:%S %p", "%H:%M", "%H:%M:%S" }
+EasyTools.Defines.BlizzardTimeFormatExample = { "None", "03:27", "03:27:32", "03:27 PM", "03:27:32 PM", "15:27",
+    "15:27:32" }
+
+EasyTools.Defines.ItemContextNames = {
     [0] = "NONE",
     [1] = "Dungeon Normal",
     [2] = "Dungeon Heroic",
@@ -187,4 +192,66 @@ EasyTools.ItemContextNames = {
     [183] = "Warbound 19",
     [184] = "Warbound 20",
     [185] = "Endeavors",
+}
+
+EasyTools.Defines.kinds = {
+    spell = "SpellId",
+    item = "ItemId",
+    unit = "CreatureId",
+    quest = "QuestId",
+    talent = "TalentId",
+    achievement = "AchievementId",
+    criteria = "CriteriaId",
+    ability = "AbilityId",
+    currency = "CurrencyId",
+    artifactpower = "ArtifactPowerId",
+    enchant = "EnchantId",
+    bonus = "BonusId",
+    gem = "GemId",
+    mount = "MountId",
+    companion = "CompanionId",
+    macro = "MacroId",
+    set = "SetId",
+    visual = "VisualId",
+    source = "SourceId",
+    species = "SpeciesId",
+    icon = "IconId",
+    areapoi = "AreaPoiId",
+    vignette = "VignetteId",
+    expansion = "ExpansionId",
+    object = "ObjectId",
+    traitnode = "TraitNodeId",
+    traitentry = "TraitEntryId",
+    traitdef = "TraitDefinitionId",
+    context = "Context",
+}
+
+EasyTools.Defines.disabledKinds = {
+    icon = true,
+    expansion = true,
+}
+
+EasyTools.Defines.kindsByID = {
+    [0]  = "item",
+    [1]  = "spell",
+    [2]  = "unit",
+    [3]  = "unit",
+    [4]  = "object",
+    [5]  = "currency",
+    [6]  = "unit",
+    [7]  = "spell",
+    [8]  = "spell",
+    [9]  = "unit",
+    [10] = "mount",
+    [11] = "spell",
+    [12] = "achievement",
+    [13] = "spell",
+    [14] = "set",
+    [17] = "spell",
+    [18] = "spell",
+    [19] = "item",
+    [22] = "quest",
+    [23] = "quest",
+    [24] = "quest",
+    [25] = "macro",
 }

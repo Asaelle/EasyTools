@@ -8,6 +8,13 @@
 ## Category: Development Tools
 ## X-Curse-Project-ID: 1417423
 
-Modules\ItemContext.lua
-Modules\TooltipKinds.lua
+Defines.lua
+Utils.lua
+Settings.lua
+Modules\Chat.lua
+Modules\Gossip.lua
+Modules\NpcSpawnTime.lua
+Modules\QuestId.lua
+Modules\QuestTracker.lua
+Modules\TooltipID.lua
 EasyTools.lua
