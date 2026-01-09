@@ -147,6 +147,11 @@ hook(_G, "QuestMapLogTitleButton_OnEnter", function(tooltip)
     end
 end)
 
+-- Quest icons on map (WQ, normal quests)
+hook(_G, "TaskPOI_OnEnter", function(tooltip)
+    if tooltip and tooltip.questID then add(GameTooltip, tooltip.questID, "quest") end
+end)
+
 -- World Map Pins
 hook(AreaPOIPinMixin, "TryShowTooltip", function(tooltip)
     if tooltip and tooltip.areaPoiID then add(GameTooltip, tooltip.areaPoiID, "areapoi") end
