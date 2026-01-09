@@ -6,7 +6,7 @@ local function SendMessage(...)
 end
 
 local function SendError(...)
-    print("|cFFFF3333" .. addonName .. "|r:", ...)
+    print("|cFFFF3333[Error] " .. addonName .. "|r:", ...)
 end
 
 local function GetTimestampString()
