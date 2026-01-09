@@ -7,6 +7,7 @@ local hook = Utils.hook
 local isSecret = Utils.isSecret
 local getTooltipName = Utils.getTooltipName
 local isStringOrNumber = Utils.isStringOrNumber
+local GetIDFromPin = Utils.GetIDFromPin
 
 local kinds = Defines.kinds
 local disabledKinds = Defines.disabledKinds
@@ -27,7 +28,6 @@ local function addLine(tooltip, id, kind)
     if disabledKinds[kind] then return end
 
     local labelKey = kind and kinds[kind] or "ID"
-    if disabledKinds[kind] then return end
 
     -- Check for Duplicates
     local name = getTooltipName(tooltip)
@@ -82,7 +82,7 @@ if TooltipDataProcessor then
     TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
         -- Wrap in pcall to catch "Secret" value errors without crashing the game
         local success, err = pcall(function()
-            if not data then return end
+            if not data or not tooltip then return end
 
             -- PROTECTED TYPE CHECK (Combat Safety)
             -- In combat, data.type for auras/spells becomes restricted/secret.
@@ -92,6 +92,13 @@ if TooltipDataProcessor then
             end
 
             local kind = kindsByID[tonumber(data.type)]
+
+            -- Ignore Embedded tooltips and Shopping tooltips
+            local name = tooltip:GetName()
+            if not name or string.find(name, "Embedded") or string.find(name, "ShoppingTooltip") or name == "GameTooltipTooltip" then return end
+
+            -- Let the manual hooks (AreaPOIPinMixin) handle these
+            if not kind or kind == "areapoi" or kind == "vignette" then return end
 
             -- Unit Handling with Secret GUID Check
             if kind == "unit" and data.guid then
@@ -152,17 +159,19 @@ hook(_G, "TaskPOI_OnEnter", function(tooltip)
     if tooltip and tooltip.questID then add(GameTooltip, tooltip.questID, "quest") end
 end)
 
--- World Map Pins
-hook(AreaPOIPinMixin, "TryShowTooltip", function(tooltip)
-    if tooltip and tooltip.areaPoiID then add(GameTooltip, tooltip.areaPoiID, "areapoi") end
-end)
+local function OnTooltipUpdate(self)
+    local owner = self:GetOwner()
+    if not owner then return end
 
--- Vignette
-hook(VignettePinMixin, "OnMouseEnter", function(tooltip)
-    if tooltip and tooltip.vignetteInfo and tooltip.vignetteInfo.vignetteID then
-        add(GameTooltip, tooltip.vignetteInfo.vignetteID, "vignette")
+    local id, kind = GetIDFromPin(owner)
+    if id and kind then
+        add(self, id, kind)
     end
-end)
+end
+
+-- Rares/Treasures/AreaPOI/Vignette id show on map
+GameTooltip:HookScript("OnUpdate", OnTooltipUpdate)
+GameTooltip:HookScript("OnShow", OnTooltipUpdate)
 
 -- Achievements
 local function achievementOnEnter(btn)
