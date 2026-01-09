@@ -161,6 +161,35 @@ local function NotifyQuestUpdate(statusType, questID, questName, mapName, x, y)
     end
 end
 
+-- Returns (id, kind) for any Map Pin (Vignette or AreaPOI)
+local function GetIDFromPin(pin)
+    if not pin then return nil end
+    local id = nil
+
+    -- Vignette check
+    if pin.vignetteID then id = pin.vignetteID end
+    if (not id or id == 0) and pin.vignetteInfo then id = pin.vignetteInfo.vignetteID end
+    if (not id or id == 0) and pin.GetVignetteID then id = pin:GetVignetteID() end
+    if id and id ~= 0 then return id, "vignette" end
+
+    -- AreaPOI check
+    if pin.poiInfo then id = pin.poiInfo.areaPoiID or pin.poiInfo.poiID end
+    if (not id or id == 0) and pin.tooltipWidgetSet then id = pin.tooltipWidgetSet end
+    if (not id or id == 0) and pin.GetAreaPoiID then id = pin:GetAreaPoiID() end
+    if (not id or id == 0) then id = pin.areaPoiID end
+    if (not id or id == 0) then id = pin.poiID end
+
+    if (not id or id == 0) and pin.GetElementData then
+        local data = pin:GetElementData()
+        if data then
+            id = data.areaPoiID or data.poiID or data.questID
+        end
+    end
+
+    if id and id ~= 0 then return id, "areapoi" end
+    return nil
+end
+
 -- Export
 if type(EasyTools.Utils) ~= "table" then EasyTools.Utils = {} end
 EasyTools.Utils = {
@@ -177,4 +206,5 @@ EasyTools.Utils = {
     GetQuestTitle = GetQuestTitle,
     GetCurrentMapInfo = GetCurrentMapInfo,
     NotifyQuestUpdate = NotifyQuestUpdate,
+    GetIDFromPin = GetIDFromPin,
 }
