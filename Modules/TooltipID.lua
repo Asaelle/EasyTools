@@ -80,35 +80,42 @@ end
 -------------------------------------------------------------------------------
 if TooltipDataProcessor then
     TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
-        if not data then return end
+        -- Wrap in pcall to catch "Secret" value errors without crashing the game
+        local success, err = pcall(function()
+            if not data then return end
 
-        -- PROTECTED TYPE CHECK (Combat Safety)
-        -- In combat, data.type for auras/spells becomes restricted/secret.
-        if isSecret(data.type) then
-            add(tooltip, data.id, "spell")
-            return
-        end
-
-        local kind = kindsByID[tonumber(data.type)]
-
-        -- Unit Handling with Secret GUID Check
-        if kind == "unit" and data.guid then
-            -- Check if GUID is secret (Hostile NPCs in instances)
-            if isSecret(data.guid) then
-                add(tooltip, data.id, "unit")
-            else
-                local unitId = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
-                if unitId and data.guid:match("%a+") ~= "Player" then
-                    add(tooltip, unitId, "unit")
-                elseif data.id then
-                    add(tooltip, data.id, "unit")
-                end
+            -- PROTECTED TYPE CHECK (Combat Safety)
+            -- In combat, data.type for auras/spells becomes restricted/secret.
+            if isSecret(data.type) then
+                add(tooltip, data.id, "spell")
+                return
             end
-            return
-        end
 
-        if data.id then
-            add(tooltip, data.id, kind)
+            local kind = kindsByID[tonumber(data.type)]
+
+            -- Unit Handling with Secret GUID Check
+            if kind == "unit" and data.guid then
+                -- Check if GUID is secret (Hostile NPCs in instances)
+                if isSecret(data.guid) then
+                    add(tooltip, data.id, "unit")
+                else
+                    local unitId = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
+                    if unitId and data.guid:match("%a+") ~= "Player" then
+                        add(tooltip, unitId, "unit")
+                    elseif data.id then
+                        add(tooltip, data.id, "unit")
+                    end
+                end
+                return
+            end
+
+            if data.id then
+                add(tooltip, data.id, kind)
+            end
+        end)
+
+        if not success then
+            Utils.SendError("[TooltipDataProcessor] " .. err)
         end
     end)
 end
