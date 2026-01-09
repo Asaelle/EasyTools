@@ -224,6 +224,7 @@ EasyTools.Defines.kinds = {
     traitentry = "TraitEntryId",
     traitdef = "TraitDefinitionId",
     context = "Context",
+    worldquest = "WorldQuestId",
 }
 
 EasyTools.Defines.disabledKinds = {
