@@ -36,8 +36,8 @@ local function addLine(tooltip, id, kind)
         for i = tooltip:NumLines(), 1, -1 do
             frame = _G[name .. "TextLeft" .. i]
             if frame then
-                text = frame:GetText()
-                if text and not isSecret(text) and string.find(text, labelKey) then return end
+                local success, text = pcall(frame.GetText, frame);
+                if success and text and not isSecret(text) and string.find(text, labelKey) then return end
             end
         end
     end
