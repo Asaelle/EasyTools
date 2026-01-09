@@ -255,4 +255,6 @@ EasyTools.Defines.kindsByID = {
     [23] = "quest",
     [24] = "quest",
     [25] = "macro",
+    [26] = "areapoi",
+    [27] = "vignette",
 }
