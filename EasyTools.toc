@@ -1,4 +1,4 @@
-## Interface: 110207, 110100, 110105, 120001
+## Interface: 110207, 110100, 110105, 120000, 120001
 ## Title: EasyTools
 ## Version: @project-version@
 ## Notes: EasyTools is a specialized toolkit designed for developers, testers, and power users in World of Warcraft.
