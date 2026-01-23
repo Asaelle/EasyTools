@@ -1,11 +1,13 @@
 local _, EasyTools = ...
 local Utils = EasyTools.Utils
 
+local isSecret = Utils.isSecret
+
 -------------------------------------------------------------------------------
 -- Chat Frame Timestamp
 -------------------------------------------------------------------------------
 local function OnAddMessage(frame, text, ...)
-    if text and type(text) == "string" and text ~= "" then
+    if text and not isSecret(text) and type(text) == "string" and text ~= "" then
         local ts = Utils.GetTimestampString()
         if ts and ts ~= "" then
             local TIMESTAMP_COLOR_CODE = "|cff808080"
@@ -64,7 +66,7 @@ local function GetChatLines(chatFrame)
     local start = math.max(1, num - amount)
     for i = start, num do
         local text = chatFrame:GetMessageInfo(i)
-        if text then table.insert(lines, text) end
+        if text and not isSecret(text) then table.insert(lines, text) end
     end
     return table.concat(lines, "\n")
 end
