@@ -95,13 +95,14 @@ if TooltipDataProcessor then
             end
 
             local kind = kindsByID[tonumber(data.type)]
+            if not kind then return end
 
-            -- Ignore Embedded tooltips and Shopping tooltips
+            -- AreaPOI and Vignette are handled in Map Pin Ticker System
+            if kind == "areapoi" or kind == "vignette" then return end
+
+            -- Ignore Embedded tooltips
             local name = tooltip:GetName()
-            if not name or string.find(name, "Embedded") or string.find(name, "ShoppingTooltip") or name == "GameTooltipTooltip" then return end
-
-            -- Let the manual hooks (AreaPOIPinMixin) handle these
-            if not kind or kind == "areapoi" or kind == "vignette" then return end
+            if not name or string.find(name, "Embedded") then return end
 
             -- Unit Handling with Secret GUID Check
             if kind == "unit" and data.guid then
@@ -162,19 +163,32 @@ hook(_G, "TaskPOI_OnEnter", function(tooltip)
     if tooltip and tooltip.questID then add(GameTooltip, tooltip.questID, "quest") end
 end)
 
-local function OnTooltipUpdate(self)
-    local owner = self:GetOwner()
-    if not owner then return end
+-------------------------------------------------------------------------------
+-- Map Pin Ticker System
+-------------------------------------------------------------------------------
 
-    local id, kind = GetIDFromPin(owner)
-    if id and kind then
-        add(self, id, kind)
+local function OnPinMouseEnter(self)
+    local id, kind = GetIDFromPin(self)
+    if id and kind and GameTooltip:IsVisible() then
+        add(GameTooltip, id, kind)
     end
 end
 
--- Rares/Treasures/AreaPOI/Vignette id show on map
-GameTooltip:HookScript("OnUpdate", OnTooltipUpdate)
-GameTooltip:HookScript("OnShow", OnTooltipUpdate)
+if VignettePinMixin then
+    hook(VignettePinMixin, "OnMouseEnter", OnPinMouseEnter)
+end
+
+if AreaPOIPinMixin then
+    hook(AreaPOIPinMixin, "OnMouseEnter", OnPinMouseEnter)
+end
+
+if DungeonEntrancePinMixin then
+    hook(DungeonEntrancePinMixin, "OnMouseEnter", OnPinMouseEnter)
+end
+
+if DelveEntrancePinMixin then
+    hook(DelveEntrancePinMixin, "OnMouseEnter", OnPinMouseEnter)
+end
 
 -- Achievements
 local function achievementOnEnter(btn)
