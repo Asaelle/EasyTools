@@ -32,9 +32,8 @@ local function addLine(tooltip, id, kind)
     -- Check for Duplicates
     local name = getTooltipName(tooltip)
     if name then
-        local frame, text
         for i = tooltip:NumLines(), 1, -1 do
-            frame = _G[name .. "TextLeft" .. i]
+            local frame = _G[name .. "TextLeft" .. i]
             if frame then
                 local success, text = pcall(frame.GetText, frame);
                 if success and text and not isSecret(text) and string.find(text, labelKey) then return end
@@ -52,7 +51,11 @@ local function addLine(tooltip, id, kind)
     local left = labelKey .. (multiple and "s" or "")
     local right = multiple and table.concat(id, ",") or id
     tooltip:AddDoubleLine(left, right, nil, nil, nil, WHITE_FONT_COLOR.r, WHITE_FONT_COLOR.g, WHITE_FONT_COLOR.b)
-    tooltip:Show()
+
+    local s, err = pcall(function() tooltip:Show() end)
+    if not s then
+        Utils.SendError("[addLine:Show()] " .. err)
+    end
 end
 
 local function add(tooltip, id, kind)
