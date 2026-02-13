@@ -16,7 +16,28 @@ local function AddQuestIdToObjectiveTracker(_, block)
     local text = textLine:GetText()
     -- Check if ID is already there (starts with [123])
     if text and not text:match("^%[%d+%]") then
+        -- Store original height before modification
+        local originalHeight = textLine:GetHeight()
+
+        -- Configure the text to handle multiple lines properly
+        textLine:SetMaxLines(0) -- Allow unlimited lines
         textLine:SetText(("[%d] %s"):format(block.id, text))
+
+        -- Calculate new text height after adding ID
+        local newHeight = textLine:GetStringHeight()
+
+        -- If text height increased, adjust the block height
+        if newHeight > originalHeight then
+            local heightDiff = newHeight - originalHeight
+            if block.height then
+                block.height = block.height + heightDiff
+            end
+            -- Adjust the block's actual frame height
+            if block.SetHeight then
+                local currentBlockHeight = block:GetHeight()
+                block:SetHeight(currentBlockHeight + heightDiff)
+            end
+        end
     end
 end
 
