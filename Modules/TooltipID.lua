@@ -75,6 +75,40 @@ local function add(tooltip, id, kind)
             local spellId = select(2, GetItemSpell(id))
             if spellId then add(tooltip, spellId, "spell") end
         end
+
+        -- Add Context and Bonus IDs from itemLink
+        if tooltip.GetItem then
+            local success, _, itemLink = pcall(tooltip.GetItem, tooltip)
+            if success and itemLink then
+                -- Extract context (instanceDifficulty) from itemLink
+                -- Format: itemID:enchant:gem1:gem2:gem3:gem4:suffix:unique:level:spec:upgrade:instanceDifficulty:numBonusIDs:bonusID1...
+                local linkData = { strsplit(":", itemLink:match("item:([%-?%d:]+)")) }
+
+                -- Context is at position 12 (instanceDifficulty)
+                local context = tonumber(linkData[12])
+                if context and context > 0 then
+                    local contextName = Defines.ItemContextNames[context] or "UNKNOWN"
+                    addLine(tooltip, string.format("%d (%s)", context, contextName), "context")
+                end
+
+                -- Bonus IDs start at position 14
+                local numBonusIDs = tonumber(linkData[13])
+                if numBonusIDs and numBonusIDs > 0 then
+                    local bonusIDs = {}
+                    for i = 1, numBonusIDs do
+                        local bonusID = tonumber(linkData[13 + i])
+                        if bonusID then
+                            table.insert(bonusIDs, bonusID)
+                        end
+                    end
+                    -- Don't display if only bonus is 3407 (client preview)
+                    -- But display it if there are other bonuses alongside it
+                    if #bonusIDs > 0 and not (#bonusIDs == 1 and bonusIDs[1] == 3407) then
+                        addLine(tooltip, bonusIDs, "bonus")
+                    end
+                end
+            end
+        end
     end
 end
 
