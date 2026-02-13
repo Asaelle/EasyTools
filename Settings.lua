@@ -139,6 +139,21 @@ local function Initialize()
         end
     end
 
+    ---------------------------------------------------------------------------
+    -- Section: Minimap
+    ---------------------------------------------------------------------------
+    do
+        layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Minimap"))
+
+        local settingShowSeconds = SafeRegister(category, "ET_MinimapShowSeconds", "minimapShowSeconds",
+            EasyToolsDB.Settings, Settings.VarType.Boolean, "Show Seconds on Clock", true)
+
+        if settingShowSeconds then
+            Settings.CreateCheckbox(category, settingShowSeconds,
+                "Display seconds on the minimap clock (requires local time).")
+        end
+    end
+
     Settings.RegisterAddOnCategory(category)
 end
 

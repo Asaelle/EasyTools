@@ -113,7 +113,11 @@ local function UpdateMinimapClock()
         end
     end
 
-    if useLocalTime and s then
+    -- Check if user wants to display seconds (only available for local time)
+    local showSeconds = EasyToolsDB and EasyToolsDB.Settings and EasyToolsDB.Settings.minimapShowSeconds
+    if showSeconds == nil then showSeconds = true end -- Default to true
+
+    if useLocalTime and s and showSeconds then
         GMinimapClock.text:SetFormattedText("%02d:%02d:%02d%s", h, m, s, ampm)
     else
         GMinimapClock.text:SetFormattedText("%02d:%02d%s", h, m, ampm)
